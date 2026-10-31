@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Site Dark Mode",
+  "version": "1.0.0",
+  "description": "Shows websites in their own dark mode while your browser stays light. Click the icon to turn it on or off.",
+  "homepage_url": "https://github.com/AlbinaBlazhko17/site-dark-mode",
+  "minimum_chrome_version": "102",
+  "icons": {
+    "16": "icons/moon-16.png",
+    "32": "icons/moon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Site Dark Mode: on (click to turn off)",
+    "default_icon": {
+      "16": "icons/moon-16.png",
+      "32": "icons/moon-32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "scripting", "declarativeNetRequest"],
+  "host_permissions": ["<all_urls>"],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "dark_header",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}

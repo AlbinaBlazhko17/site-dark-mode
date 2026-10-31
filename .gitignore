@@ -1,0 +1,7 @@
+# Chrome writes this folder when it loads the extension.
+_metadata/
+
+# The upload zip for the Chrome Web Store.
+dist/
+
+.DS_Store
