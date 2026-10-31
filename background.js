@@ -116,16 +116,21 @@ const iconsReady = Promise.all([
 ]);
 
 // Put the scripts into tabs that are open now.
-// If a tab already has the scripts, the scripts ignore the second load.
-async function injectIntoOpenTabs() {
+// If a tab already has a working copy of a script, the new copy stops.
+// If a tab has an old copy from before a reload or an update,
+// the new copy replaces it. The old copy cannot get the clicks any more.
+// page-world.js starts in the "on" state, so we add it only when turning on.
+async function injectIntoOpenTabs(enabled) {
   const tabs = await chrome.tabs.query({});
   for (const tab of tabs) {
     try {
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id, allFrames: true },
-        files: ["page-world.js"],
-        world: "MAIN",
-      });
+      if (enabled) {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id, allFrames: true },
+          files: ["page-world.js"],
+          world: "MAIN",
+        });
+      }
       await chrome.scripting.executeScript({
         target: { tabId: tab.id, allFrames: true },
         files: ["content.js"],
@@ -150,10 +155,7 @@ async function toggleDarkSites() {
   await chrome.storage.local.set({ enabled: newEnabled });
   await updateHeaderRule(newEnabled);
   await updateContentScripts(newEnabled);
-
-  if (newEnabled) {
-    await injectIntoOpenTabs();
-  }
+  await injectIntoOpenTabs(newEnabled);
 }
 
 chrome.action.onClicked.addListener(toggleDarkSites);
@@ -161,9 +163,7 @@ chrome.action.onClicked.addListener(toggleDarkSites);
 chrome.runtime.onInstalled.addListener(async function () {
   const enabled = await readEnabled();
   await applyState(enabled);
-  if (enabled) {
-    await injectIntoOpenTabs();
-  }
+  await injectIntoOpenTabs(enabled);
 });
 
 chrome.runtime.onStartup.addListener(async function () {

@@ -3,11 +3,25 @@
 // It also turns it off again when the user clicks the toolbar icon.
 
 (function () {
-  // Do not run two times in the same page.
-  if (window.siteDarkModeLoaded === true) {
+  // Another copy of this script can already be in the page.
+  // We ask it "are you there?". A working copy answers at once.
+  // (DOM events run at once and all copies of the script can see them.)
+  let workingCopyAnswered = false;
+  function onAnswer() {
+    workingCopyAnswered = true;
+  }
+  document.addEventListener("site-dark-mode-answer", onAnswer);
+  document.dispatchEvent(new CustomEvent("site-dark-mode-question"));
+  document.removeEventListener("site-dark-mode-answer", onAnswer);
+
+  if (workingCopyAnswered) {
     return;
   }
-  window.siteDarkModeLoaded = true;
+
+  // An old copy can stay in the page after the extension reloads or updates.
+  // It cannot get the clicks any more, so it does not answer.
+  // We tell it to undo its changes and stop. Then this copy takes its place.
+  document.dispatchEvent(new CustomEvent("site-dark-mode-stop-old-copy"));
 
   // If the browser is already dark, the site is already dark. Do nothing.
   // (In this world, matchMedia is the real one. page-world.js does not change it here.)
@@ -245,7 +259,10 @@
   function turnOff() {
     isOn = false;
     document.dispatchEvent(new CustomEvent("site-dark-mode-off"));
+    undoChanges();
+  }
 
+  function undoChanges() {
     for (const item of changedMediaLists) {
       item.mediaList.mediaText = item.originalText;
     }
@@ -293,6 +310,26 @@
 
   document.addEventListener("DOMContentLoaded", scheduleScan);
   window.addEventListener("load", scheduleScan);
+
+  // A new copy of this script asks "are you there?".
+  // We answer only if we are still connected to the extension.
+  // After a reload or an update, chrome.runtime.id is empty in an old copy.
+  function onQuestion() {
+    if (chrome.runtime && chrome.runtime.id) {
+      document.dispatchEvent(new CustomEvent("site-dark-mode-answer"));
+    }
+  }
+  document.addEventListener("site-dark-mode-question", onQuestion);
+
+  // A new copy took our place. Undo our changes and stop.
+  function onStopOldCopy() {
+    isOn = false;
+    undoChanges();
+    observer.disconnect();
+    document.removeEventListener("site-dark-mode-question", onQuestion);
+    document.removeEventListener("site-dark-mode-stop-old-copy", onStopOldCopy);
+  }
+  document.addEventListener("site-dark-mode-stop-old-copy", onStopOldCopy);
 
   // The user clicks the toolbar icon. background.js saves the new state.
   chrome.storage.onChanged.addListener(function (changes, areaName) {

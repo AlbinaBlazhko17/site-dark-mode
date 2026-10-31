@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Site Dark Mode",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shows websites in their own dark mode while your browser stays light. Click the icon to turn it on or off.",
   "homepage_url": "https://github.com/AlbinaBlazhko17/site-dark-mode",
   "minimum_chrome_version": "102",
